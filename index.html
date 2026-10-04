@@ -11,7 +11,6 @@
     header { background: #1a365d; color: white; padding: 18px 20px; text-align: center; }
     header h1 { font-size: 1.4rem; }
     
-    /* Subject Tabs Bar */
     .tabs-wrapper { display: flex; align-items: center; background: #2b6cb0; padding: 8px 12px; gap: 8px; overflow-x: auto; }
     .tab-btn { background: rgba(255, 255, 255, 0.15); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
     .tab-btn.active { background: white; color: #1a365d; font-weight: bold; }
@@ -19,11 +18,9 @@
 
     .container { max-width: 800px; margin: 20px auto; padding: 0 16px; }
 
-    /* Action Toolbar */
     .toolbar { display: flex; gap: 10px; margin-bottom: 20px; }
     .btn-primary { background: #2b6cb0; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; width: 100%; }
 
-    /* Form Card */
     .form-card { display: none; background: white; padding: 18px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
     .form-card.active { display: block; }
     .form-card h2 { font-size: 1.15rem; margin-bottom: 12px; color: #1a365d; }
@@ -32,17 +29,17 @@
     .form-group input, .form-group select { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9rem; }
     .submit-btn { background: #28a745; color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; }
 
-    /* Lecture Cards */
-    .section-content { display: none; }
-    .section-content.active { display: block; }
     .lecture-card { background: white; border-radius: 10px; margin-bottom: 16px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-    .lecture-card iframe { width: 100%; height: 215px; border: none; background: #000; }
+    .player-box { width: 100%; height: 220px; background: #000; display: flex; align-items: center; justify-content: center; }
+    video, iframe { width: 100%; height: 100%; border: none; }
     .lecture-info { padding: 14px; }
     .lecture-info h3 { font-size: 1.05rem; margin-bottom: 6px; }
     .lecture-info p { font-size: 0.85rem; color: #65676b; margin-bottom: 12px; }
     .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .action-btn { display: inline-block; background: #2b6cb0; color: white; text-decoration: none; padding: 7px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; }
-    .download-btn { background: #28a745; }
+    .action-btn { display: inline-block; background: #2b6cb0; color: white; text-decoration: none; padding: 7px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; border: none; cursor: pointer; }
+    .offline-save-btn { background: #3182ce; }
+    .offline-done-btn { background: #2b6cb0; opacity: 0.7; }
+    .delete-btn { background: #e53e3e; }
     .empty-state { text-align: center; color: #718096; padding: 30px 0; }
   </style>
 </head>
@@ -52,13 +49,11 @@
     <h1>Lecture Hub Portal</h1>
   </header>
 
-  <!-- Subject Tabs -->
   <div class="tabs-wrapper" id="tabsList">
     <button class="add-section-btn" onclick="promptNewSection()">+ New Subject</button>
   </div>
 
   <div class="container">
-    <!-- Toolbar -->
     <div class="toolbar">
       <button class="btn-primary" onclick="toggleUploadForm()">+ Upload / Add Lecture</button>
     </div>
@@ -72,46 +67,75 @@
       </div>
       <div class="form-group">
         <label>Lecture Title</label>
-        <input type="text" id="lectureTitle" placeholder="e.g. Political Science: Constitution Preamble" />
+        <input type="text" id="lectureTitle" placeholder="e.g. Political Science Lecture 1" />
       </div>
       <div class="form-group">
         <label>Duration</label>
         <input type="text" id="lectureDuration" placeholder="e.g. 2h 15m" />
       </div>
       <div class="form-group">
-        <label>YouTube Video Link or ID</label>
-        <input type="text" id="lectureVideo" placeholder="e.g. dQw4w9WgXcQ or YouTube share link" />
+        <label>Video Stream / Direct MP4 URL</label>
+        <input type="text" id="lectureVideoUrl" placeholder="Direct .mp4 link OR YouTube link/ID" />
+        <small style="color: #718096; font-size: 0.78rem;">Note: True in-app offline download requires direct video files (.mp4).</small>
       </div>
       <div class="form-group">
-        <label>PDF Notes Link (Google Drive / Direct link)</label>
-        <input type="text" id="lecturePdf" placeholder="https://drive.google.com/..." />
-      </div>
-      <div class="form-group">
-        <label>Offline Video Download Link</label>
-        <input type="text" id="lectureDownload" placeholder="https://... (Direct video download link)" />
+        <label>PDF Notes Link</label>
+        <input type="text" id="lecturePdf" placeholder="Google Drive or direct PDF link" />
       </div>
       <button class="submit-btn" onclick="saveLecture()">Publish Lecture</button>
     </div>
 
-    <!-- Lecture Display Area -->
     <div id="sectionsContainer"></div>
   </div>
 
   <script>
-    // Initial data setup
+    // --- IndexedDB Setup for Video File Storage ---
+    const DB_NAME = 'LectureHubDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'videos';
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => req.result.createObjectStore(STORE_NAME);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function storeOfflineVideo(id, blob) {
+      const db = await openDatabase();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).put(blob, id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function getOfflineVideo(id) {
+      const db = await openDatabase();
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const req = tx.objectStore(STORE_NAME).get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    async function removeOfflineVideo(id) {
+      const db = await openDatabase();
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(id);
+        tx.oncomplete = () => resolve();
+      });
+    }
+
+    // --- State & UI Logic ---
     const defaultSections = ['History', 'Economics', 'Geography', 'Political Science'];
     let sections = JSON.parse(localStorage.getItem('portal_sections')) || defaultSections;
-    let lectures = JSON.parse(localStorage.getItem('portal_lectures')) || [
-      {
-        subject: 'History',
-        title: 'History Lecture 1: Ancient Civilization',
-        duration: '2h 15m',
-        videoId: 'dQw4w9WgXcQ',
-        pdfUrl: '#',
-        downloadUrl: '#'
-      }
-    ];
-
+    let lectures = JSON.parse(localStorage.getItem('portal_lectures')) || [];
     let currentSection = sections[0] || 'History';
 
     function renderTabs() {
@@ -122,7 +146,7 @@
         const btn = document.createElement('button');
         btn.className = `tab-btn ${sec === currentSection ? 'active' : ''}`;
         btn.innerText = sec;
-        btn.onclick = () => switchSection(sec);
+        btn.onclick = () => { currentSection = sec; renderTabs(); };
         tabsWrapper.appendChild(btn);
       });
 
@@ -136,13 +160,8 @@
       renderLectures();
     }
 
-    function switchSection(secName) {
-      currentSection = secName;
-      renderTabs();
-    }
-
     function promptNewSection() {
-      const name = prompt('Enter the name of the new section (e.g., Political Science, Polity):');
+      const name = prompt('Enter subject name:');
       if (name && !sections.includes(name.trim())) {
         sections.push(name.trim());
         localStorage.setItem('portal_sections', JSON.stringify(sections));
@@ -164,73 +183,130 @@
     }
 
     function toggleUploadForm() {
-      const form = document.getElementById('uploadForm');
-      form.classList.toggle('active');
+      document.getElementById('uploadForm').classList.toggle('active');
     }
 
-    function extractVideoId(input) {
-      if (!input) return '';
+    function isDirectVideo(url) {
+      return url.endsWith('.mp4') || url.endsWith('.webm') || url.includes('.mp4?');
+    }
+
+    function extractYouTubeId(url) {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = input.match(regExp);
-      return (match && match[2].length === 11) ? match[2] : input.trim();
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
     }
 
     function saveLecture() {
       const subject = document.getElementById('lectureSubjectSelect').value;
       const title = document.getElementById('lectureTitle').value;
       const duration = document.getElementById('lectureDuration').value || '2h 00m';
-      const rawVideo = document.getElementById('lectureVideo').value;
-      const pdfUrl = document.getElementById('lecturePdf').value || '#';
-      const downloadUrl = document.getElementById('lectureDownload').value || '#';
+      const videoInput = document.getElementById('lectureVideoUrl').value.trim();
+      const pdfUrl = document.getElementById('lecturePdf').value.trim() || '#';
 
-      if (!title || !rawVideo) {
-        alert('Please enter at least a title and video link/ID.');
+      if (!title || !videoInput) {
+        alert('Please provide a title and video link.');
         return;
       }
 
-      const videoId = extractVideoId(rawVideo);
+      const ytId = extractYouTubeId(videoInput);
+      const isDirect = isDirectVideo(videoInput);
 
-      lectures.push({ subject, title, duration, videoId, pdfUrl, downloadUrl });
+      const newLecture = {
+        id: 'lec_' + Date.now(),
+        subject,
+        title,
+        duration,
+        type: isDirect ? 'direct' : (ytId ? 'youtube' : 'direct'),
+        videoSource: ytId || videoInput,
+        pdfUrl
+      };
+
+      lectures.push(newLecture);
       localStorage.setItem('portal_lectures', JSON.stringify(lectures));
 
-      // Reset form
       document.getElementById('lectureTitle').value = '';
-      document.getElementById('lectureVideo').value = '';
+      document.getElementById('lectureVideoUrl').value = '';
       document.getElementById('lecturePdf').value = '';
-      document.getElementById('lectureDownload').value = '';
       document.getElementById('uploadForm').classList.remove('active');
 
       currentSection = subject;
       renderTabs();
     }
 
-    function renderLectures() {
+    async function downloadForOffline(id, videoUrl, btnElement) {
+      btnElement.innerText = 'Downloading...';
+      btnElement.disabled = true;
+
+      try {
+        const res = await fetch(videoUrl);
+        if (!res.ok) throw new Error('Network error');
+        const blob = await res.blob();
+        await storeOfflineVideo(id, blob);
+        btnElement.innerText = 'Saved Offline ✓';
+        btnElement.className = 'action-btn offline-done-btn';
+        renderLectures();
+      } catch (err) {
+        alert('Could not download file offline. Ensure the link points directly to a CORS-accessible video file (.mp4).');
+        btnElement.innerText = 'Save Offline';
+        btnElement.disabled = false;
+      }
+    }
+
+    async function deleteLecture(id) {
+      if (confirm('Delete this lecture?')) {
+        await removeOfflineVideo(id);
+        lectures = lectures.filter(l => l.id !== id);
+        localStorage.setItem('portal_lectures', JSON.stringify(lectures));
+        renderLectures();
+      }
+    }
+
+    async function renderLectures() {
       const container = document.getElementById('sectionsContainer');
       container.innerHTML = '';
 
       const filtered = lectures.filter(l => l.subject === currentSection);
-
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="empty-state">No lectures added to <strong>${currentSection}</strong> yet.<br>Tap <em>+ Upload / Add Lecture</em> above to add one.</div>`;
+        container.innerHTML = `<div class="empty-state">No lectures in <strong>${currentSection}</strong>. Tap <em>+ Upload / Add Lecture</em> to add one.</div>`;
         return;
       }
 
-      filtered.forEach(lec => {
+      for (const lec of filtered) {
         const card = document.createElement('div');
         card.className = 'lecture-card';
+
+        const offlineBlob = await getOfflineVideo(lec.id);
+        let mediaHtml = '';
+
+        if (offlineBlob) {
+          const blobUrl = URL.createObjectURL(offlineBlob);
+          mediaHtml = `<video controls src="${blobUrl}"></video>`;
+        } else if (lec.type === 'youtube') {
+          mediaHtml = `<iframe src="https://www.youtube.com/embed/${lec.videoSource}" allowfullscreen></iframe>`;
+        } else {
+          mediaHtml = `<video controls src="${lec.videoSource}"></video>`;
+        }
+
+        const offlineBtn = lec.type === 'direct'
+          ? (offlineBlob 
+              ? `<span class="action-btn offline-done-btn">Saved Offline ✓</span>`
+              : `<button class="action-btn offline-save-btn" onclick="downloadForOffline('${lec.id}', '${lec.videoSource}', this)">Save Offline</button>`)
+          : '';
+
         card.innerHTML = `
-          <iframe src="https://www.youtube.com/embed/${lec.videoId}" allowfullscreen></iframe>
+          <div class="player-box">${mediaHtml}</div>
           <div class="lecture-info">
             <h3>${lec.title}</h3>
-            <p>Duration: ${lec.duration}</p>
+            <p>Duration: ${lec.duration} ${offlineBlob ? '• <em>Offline Available</em>' : ''}</p>
             <div class="btn-row">
-              <a href="${lec.pdfUrl}" class="action-btn" target="_blank">Download Notes (PDF)</a>
-              <a href="${lec.downloadUrl}" class="action-btn download-btn" target="_blank" download>Download Lecture</a>
+              <a href="${lec.pdfUrl}" class="action-btn" target="_blank">PDF Notes</a>
+              ${offlineBtn}
+              <button class="action-btn delete-btn" onclick="deleteLecture('${lec.id}')">Remove</button>
             </div>
           </div>
         `;
         container.appendChild(card);
-      });
+      }
     }
 
     renderTabs();

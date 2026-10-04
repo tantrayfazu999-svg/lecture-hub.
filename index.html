@@ -6,22 +6,44 @@
   <title>Lecture Hub</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    body { background: #f0f2f5; color: #1c1e21; padding-bottom: 40px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #f0f2f5; color: #1c1e21; padding-bottom: 50px; }
     header { background: #1a365d; color: white; padding: 18px 20px; text-align: center; }
     header h1 { font-size: 1.4rem; }
-    .tabs { display: flex; overflow-x: auto; background: #2b6cb0; padding: 8px 12px; gap: 8px; }
-    .tab-btn { background: rgba(255,255,255,0.15); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; white-space: nowrap; cursor: pointer; }
+    
+    /* Subject Tabs Bar */
+    .tabs-wrapper { display: flex; align-items: center; background: #2b6cb0; padding: 8px 12px; gap: 8px; overflow-x: auto; }
+    .tab-btn { background: rgba(255, 255, 255, 0.15); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
     .tab-btn.active { background: white; color: #1a365d; font-weight: bold; }
+    .add-section-btn { background: #38a169; color: white; border: none; padding: 8px 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; font-weight: bold; white-space: nowrap; }
+
     .container { max-width: 800px; margin: 20px auto; padding: 0 16px; }
+
+    /* Action Toolbar */
+    .toolbar { display: flex; gap: 10px; margin-bottom: 20px; }
+    .btn-primary { background: #2b6cb0; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; width: 100%; }
+
+    /* Form Card */
+    .form-card { display: none; background: white; padding: 18px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .form-card.active { display: block; }
+    .form-card h2 { font-size: 1.15rem; margin-bottom: 12px; color: #1a365d; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+    .form-group input, .form-group select { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9rem; }
+    .submit-btn { background: #28a745; color: white; border: none; padding: 10px; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; }
+
+    /* Lecture Cards */
     .section-content { display: none; }
     .section-content.active { display: block; }
     .lecture-card { background: white; border-radius: 10px; margin-bottom: 16px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
     .lecture-card iframe { width: 100%; height: 215px; border: none; background: #000; }
     .lecture-info { padding: 14px; }
     .lecture-info h3 { font-size: 1.05rem; margin-bottom: 6px; }
-    .lecture-info p { font-size: 0.85rem; color: #65676b; margin-bottom: 10px; }
-    .action-btn { display: inline-block; background: #2b6cb0; color: white; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; }
+    .lecture-info p { font-size: 0.85rem; color: #65676b; margin-bottom: 12px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .action-btn { display: inline-block; background: #2b6cb0; color: white; text-decoration: none; padding: 7px 14px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; }
+    .download-btn { background: #28a745; }
+    .empty-state { text-align: center; color: #718096; padding: 30px 0; }
   </style>
 </head>
 <body>
@@ -30,70 +52,188 @@
     <h1>Lecture Hub Portal</h1>
   </header>
 
-  <!-- Subject Section Tabs -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="showSection('history')">History</button>
-    <button class="tab-btn" onclick="showSection('economics')">Economics</button>
-    <button class="tab-btn" onclick="showSection('geography')">Geography</button>
+  <!-- Subject Tabs -->
+  <div class="tabs-wrapper" id="tabsList">
+    <button class="add-section-btn" onclick="promptNewSection()">+ New Subject</button>
   </div>
 
   <div class="container">
-    <!-- History Section -->
-    <div id="history" class="section-content active">
-      <div class="lecture-card">
-        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
-        <div class="lecture-info">
-          <h3>History Lecture 1: Ancient Civilization</h3>
-          <p>Duration: 2h 15m</p>
-          <a href="#" class="action-btn" target="_blank">Download Notes (PDF)</a>
-                <a href="#" class="action-btn" target="_blank">Download Notes (PDF)</a>
-      <a href="YOUR_DOWNLOAD_LINK" class="action-btn" target="_blank" style="background:#28a745; margin-left: 6px;">Download Lecture</a>
-            <div class="lecture-card">
-    <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" allowfullscreen></iframe>
-    <div class="lecture-info">
-      <h3>History Lecture 2: Vedic Period</h3>
-      <p>Duration: 2h 00m</p>
-      <a href="YOUR_PDF_LINK" class="action-btn" target="_blank">Download Notes (PDF)</a>
-      <a href="YOUR_DOWNLOAD_LINK" class="action-btn" target="_blank" style="background:#28a745; margin-left: 6px;">Download Lecture</a>
-    </div>
-            </div>
-          
-        </div>
-      </div>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <button class="btn-primary" onclick="toggleUploadForm()">+ Upload / Add Lecture</button>
     </div>
 
-    <!-- Economics Section -->
-    <div id="economics" class="section-content">
-      <div class="lecture-card">
-        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
-        <div class="lecture-info">
-          <h3>Economics Lecture 1: Introduction to Macroeconomics</h3>
-          <p>Duration: 1h 45m</p>
-          <a href="#" class="action-btn" target="_blank">Download Notes (PDF)</a>
-        </div>
+    <!-- Upload Form -->
+    <div class="form-card" id="uploadForm">
+      <h2>Add Lecture to Portal</h2>
+      <div class="form-group">
+        <label>Subject</label>
+        <select id="lectureSubjectSelect"></select>
       </div>
+      <div class="form-group">
+        <label>Lecture Title</label>
+        <input type="text" id="lectureTitle" placeholder="e.g. Political Science: Constitution Preamble" />
+      </div>
+      <div class="form-group">
+        <label>Duration</label>
+        <input type="text" id="lectureDuration" placeholder="e.g. 2h 15m" />
+      </div>
+      <div class="form-group">
+        <label>YouTube Video Link or ID</label>
+        <input type="text" id="lectureVideo" placeholder="e.g. dQw4w9WgXcQ or YouTube share link" />
+      </div>
+      <div class="form-group">
+        <label>PDF Notes Link (Google Drive / Direct link)</label>
+        <input type="text" id="lecturePdf" placeholder="https://drive.google.com/..." />
+      </div>
+      <div class="form-group">
+        <label>Offline Video Download Link</label>
+        <input type="text" id="lectureDownload" placeholder="https://... (Direct video download link)" />
+      </div>
+      <button class="submit-btn" onclick="saveLecture()">Publish Lecture</button>
     </div>
 
-    <!-- Geography Section -->
-    <div id="geography" class="section-content">
-      <div class="lecture-card">
-        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" allowfullscreen></iframe>
-        <div class="lecture-info">
-          <h3>Geography Lecture 1: Physical Geography</h3>
-          <p>Duration: 2h 00m</p>
-          <a href="#" class="action-btn" target="_blank">Download Notes (PDF)</a>
-        </div>
-      </div>
-    </div>
+    <!-- Lecture Display Area -->
+    <div id="sectionsContainer"></div>
   </div>
 
   <script>
-    function showSection(id) {
-      document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      event.target.classList.add('active');
+    // Initial data setup
+    const defaultSections = ['History', 'Economics', 'Geography', 'Political Science'];
+    let sections = JSON.parse(localStorage.getItem('portal_sections')) || defaultSections;
+    let lectures = JSON.parse(localStorage.getItem('portal_lectures')) || [
+      {
+        subject: 'History',
+        title: 'History Lecture 1: Ancient Civilization',
+        duration: '2h 15m',
+        videoId: 'dQw4w9WgXcQ',
+        pdfUrl: '#',
+        downloadUrl: '#'
+      }
+    ];
+
+    let currentSection = sections[0] || 'History';
+
+    function renderTabs() {
+      const tabsWrapper = document.getElementById('tabsList');
+      tabsWrapper.innerHTML = '';
+      
+      sections.forEach(sec => {
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${sec === currentSection ? 'active' : ''}`;
+        btn.innerText = sec;
+        btn.onclick = () => switchSection(sec);
+        tabsWrapper.appendChild(btn);
+      });
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'add-section-btn';
+      addBtn.innerText = '+ New Subject';
+      addBtn.onclick = promptNewSection;
+      tabsWrapper.appendChild(addBtn);
+
+      updateDropdown();
+      renderLectures();
     }
+
+    function switchSection(secName) {
+      currentSection = secName;
+      renderTabs();
+    }
+
+    function promptNewSection() {
+      const name = prompt('Enter the name of the new section (e.g., Political Science, Polity):');
+      if (name && !sections.includes(name.trim())) {
+        sections.push(name.trim());
+        localStorage.setItem('portal_sections', JSON.stringify(sections));
+        currentSection = name.trim();
+        renderTabs();
+      }
+    }
+
+    function updateDropdown() {
+      const select = document.getElementById('lectureSubjectSelect');
+      select.innerHTML = '';
+      sections.forEach(sec => {
+        const opt = document.createElement('option');
+        opt.value = sec;
+        opt.innerText = sec;
+        select.appendChild(opt);
+      });
+      select.value = currentSection;
+    }
+
+    function toggleUploadForm() {
+      const form = document.getElementById('uploadForm');
+      form.classList.toggle('active');
+    }
+
+    function extractVideoId(input) {
+      if (!input) return '';
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = input.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : input.trim();
+    }
+
+    function saveLecture() {
+      const subject = document.getElementById('lectureSubjectSelect').value;
+      const title = document.getElementById('lectureTitle').value;
+      const duration = document.getElementById('lectureDuration').value || '2h 00m';
+      const rawVideo = document.getElementById('lectureVideo').value;
+      const pdfUrl = document.getElementById('lecturePdf').value || '#';
+      const downloadUrl = document.getElementById('lectureDownload').value || '#';
+
+      if (!title || !rawVideo) {
+        alert('Please enter at least a title and video link/ID.');
+        return;
+      }
+
+      const videoId = extractVideoId(rawVideo);
+
+      lectures.push({ subject, title, duration, videoId, pdfUrl, downloadUrl });
+      localStorage.setItem('portal_lectures', JSON.stringify(lectures));
+
+      // Reset form
+      document.getElementById('lectureTitle').value = '';
+      document.getElementById('lectureVideo').value = '';
+      document.getElementById('lecturePdf').value = '';
+      document.getElementById('lectureDownload').value = '';
+      document.getElementById('uploadForm').classList.remove('active');
+
+      currentSection = subject;
+      renderTabs();
+    }
+
+    function renderLectures() {
+      const container = document.getElementById('sectionsContainer');
+      container.innerHTML = '';
+
+      const filtered = lectures.filter(l => l.subject === currentSection);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state">No lectures added to <strong>${currentSection}</strong> yet.<br>Tap <em>+ Upload / Add Lecture</em> above to add one.</div>`;
+        return;
+      }
+
+      filtered.forEach(lec => {
+        const card = document.createElement('div');
+        card.className = 'lecture-card';
+        card.innerHTML = `
+          <iframe src="https://www.youtube.com/embed/${lec.videoId}" allowfullscreen></iframe>
+          <div class="lecture-info">
+            <h3>${lec.title}</h3>
+            <p>Duration: ${lec.duration}</p>
+            <div class="btn-row">
+              <a href="${lec.pdfUrl}" class="action-btn" target="_blank">Download Notes (PDF)</a>
+              <a href="${lec.downloadUrl}" class="action-btn download-btn" target="_blank" download>Download Lecture</a>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    renderTabs();
   </script>
 </body>
 </html>
